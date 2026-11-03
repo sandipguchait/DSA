@@ -4,6 +4,7 @@ import ProblemView from "./components/ProblemView";
 import ProgressPage from "./components/ProgressPage";
 import ShortcutsModal from "./components/ShortcutsModal";
 import Sidebar from "./components/Sidebar";
+import ResizableSidebar from "./components/ResizableSidebar";
 import TopBar, { type Page } from "./components/TopBar";
 import { Close } from "./components/Icons";
 import { PROBLEMS, PROBLEM_INDEX } from "./data/problems";
@@ -123,11 +124,7 @@ export default function App() {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <aside
-          id="problem-sidebar"
-          aria-label="Problem list"
-          className={`hidden w-[400px] shrink-0 border-r border-line bg-bg xl:w-[410px] ${sidebarCollapsed ? "" : "lg:block"}`}
-        >{sidebar}</aside>
+        <ResizableSidebar collapsed={sidebarCollapsed}>{sidebar}</ResizableSidebar>
 
         {drawer && (
           <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Problem list">

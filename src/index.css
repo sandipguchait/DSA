@@ -251,6 +251,30 @@ input[type="range"].scrub::-moz-range-thumb {
   cursor: pointer;
 }
 
+.sidebar-divider {
+  position: absolute;
+  inset-block: 0;
+  right: -5px;
+  z-index: 20;
+  display: flex;
+  width: 10px;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  touch-action: none;
+}
+.sidebar-divider span {
+  width: 4px;
+  height: 44px;
+  border-radius: 4px;
+  background: var(--line2);
+}
+.sidebar-divider:hover span,
+.sidebar-divider:focus-visible span,
+.sidebar-resizing .sidebar-divider span { background: var(--brand-hi); }
+.sidebar-divider:focus-visible { outline: 2px solid var(--brand-hi); outline-offset: -2px; }
+.sidebar-resizing, .sidebar-resizing * { cursor: col-resize !important; user-select: none; }
+
 .workbench-container { container-type: inline-size; }
 .workbench { display: grid; gap: 16px; align-items: stretch; }
 .workbench-divider { display: none; }
