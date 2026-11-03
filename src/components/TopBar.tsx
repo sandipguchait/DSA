@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "../utils/cn";
 import { ChevronDown, External, Keyboard, Logo, Menu, Moon, SidebarIcon, Sun, Trash } from "./Icons";
 
-export type Page = "problems" | "learning" | "progress";
+export type Page = "problems" | "machine" | "learning" | "progress";
 
 interface Props {
   page: Page;
@@ -18,6 +18,7 @@ interface Props {
 
 const TABS: { id: Page; label: string }[] = [
   { id: "problems", label: "Problems" },
+  { id: "machine", label: "Machine Coding" },
   { id: "learning", label: "Learning" },
   { id: "progress", label: "Progress" },
 ];
@@ -63,10 +64,10 @@ export default function TopBar({ page, onPage, theme, onTheme, onMenu, sidebarCo
 
       <button onClick={() => onPage("problems")} className="flex items-center gap-3 rounded-lg" aria-label="DSA Dry Run Lab home">
         <Logo />
-        <span className="hidden whitespace-nowrap text-[19px] font-bold tracking-tight text-ink sm:inline">DSA Dry Run Lab</span>
+        <span className="hidden whitespace-nowrap text-[19px] font-bold tracking-tight text-ink xl:inline">DSA Dry Run Lab</span>
       </button>
 
-      <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex" aria-label="Primary">
+      <nav className="ml-auto hidden items-center gap-1 md:flex" aria-label="Primary">
         {TABS.map((t) => {
           const on = page === t.id;
           return (
@@ -75,7 +76,7 @@ export default function TopBar({ page, onPage, theme, onTheme, onMenu, sidebarCo
               onClick={() => onPage(t.id)}
               aria-current={on ? "page" : undefined}
               className={cn(
-                "relative rounded-lg px-5 py-2.5 text-[14px] font-medium transition-colors",
+                "relative whitespace-nowrap rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors lg:px-4",
                 on ? "bg-brand-soft text-brand-ink" : "text-mute hover:bg-panel2 hover:text-ink"
               )}
             >

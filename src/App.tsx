@@ -9,6 +9,15 @@ import TopBar, { type Page } from "./components/TopBar";
 import { Close } from "./components/Icons";
 import { PROBLEMS, PROBLEM_INDEX } from "./data/problems";
 import { useStored, useToggleSet } from "./lib/storage";
+import MachineSidebar from "./machine/MachineSidebar";
+import MachinePage from "./machine/MachinePage";
+import { MACHINE_PROBLEMS, machineProblem } from "./machine/problems";
+
+function routeFromHash() {
+  const hash = window.location.hash.replace(/^#\/?/, "");
+  if (hash.startsWith("machine/")) return { page: "machine" as Page, machineId: machineProblem(hash.slice(8))?.id ?? MACHINE_PROBLEMS[0].id };
+  return { page: (hash === "learning" || hash === "progress" ? hash : "problems") as Page, machineId: MACHINE_PROBLEMS[0].id };
+}
 
 function idFromHash() {
   const h = window.location.hash.replace(/^#\/?/, "");
@@ -16,7 +25,9 @@ function idFromHash() {
 }
 
 export default function App() {
-  const [page, setPage] = useState<Page>("problems");
+  const [page, setPage] = useState<Page>(() => routeFromHash().page);
+  const [machineId, setMachineId] = useState(() => routeFromHash().machineId);
+  const [machineCompleted, toggleMachineCompleted, setMachineCompleted] = useToggleSet("dsa-machine-completed");
   const [currentId, setCurrentId] = useState<string>(idFromHash);
   const [theme, setTheme] = useStored<"dark" | "light">("dsa-theme", "dark");
   const [understood, toggleUnderstood, setUnderstood] = useToggleSet("dsa-understood");
@@ -27,9 +38,24 @@ export default function App() {
   const [playToken, setPlayToken] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const machineSearchRef = useRef<HTMLInputElement>(null);
 
   const idx = PROBLEM_INDEX[currentId];
   const problem = PROBLEMS[idx];
+  const selectedMachine = machineProblem(machineId) ?? MACHINE_PROBLEMS[0];
+
+  const navigate = (nextPage: Page) => {
+    setPage(nextPage);
+    setDrawer(false);
+    window.history.replaceState(null, "", `#${nextPage === "machine" ? `machine/${machineId}` : nextPage === "problems" ? currentId : nextPage}`);
+  };
+
+  const openMachine = (id: string) => {
+    setMachineId(id);
+    setPage("machine");
+    setDrawer(false);
+    window.history.replaceState(null, "", `#machine/${id}`);
+  };
 
   useEffect(() => {
     document.documentElement.classList.toggle("light", theme === "light");
@@ -48,14 +74,19 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const h = () => setCurrentId(idFromHash());
+    const h = () => {
+      const route = routeFromHash();
+      setPage(route.page);
+      if (route.page === "machine") setMachineId(route.machineId);
+      else if (route.page === "problems") setCurrentId(idFromHash());
+    };
     window.addEventListener("hashchange", h);
     return () => window.removeEventListener("hashchange", h);
   }, []);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0 });
-  }, [currentId, page]);
+  }, [currentId, machineId, page]);
 
   const prev = idx > 0 ? () => open(PROBLEMS[idx - 1].id) : null;
   const next = idx < PROBLEMS.length - 1 ? () => open(PROBLEMS[idx + 1].id) : null;
@@ -66,16 +97,16 @@ export default function App() {
       const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA");
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setPage("problems");
+        if (page !== "machine") navigate("problems");
         if (window.innerWidth < 1024) setDrawer(true);
         else setSidebarCollapsed(false);
-        setTimeout(() => searchRef.current?.focus(), 60);
+        setTimeout(() => (page === "machine" ? machineSearchRef : searchRef).current?.focus(), 60);
         return;
       }
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "?") setShortcuts(true);
-      else if (e.key === "]" && next) next();
-      else if (e.key === "[" && prev) prev();
+      else if (page === "problems" && e.key === "]" && next) next();
+      else if (page === "problems" && e.key === "[" && prev) prev();
       else if (e.key === " " && page === "problems" && el === document.body) {
         e.preventDefault();
         setPlayToken((t) => t + 1);
@@ -86,13 +117,16 @@ export default function App() {
   });
 
   const resetProgress = () => {
-    if (window.confirm("Clear all understood marks and bookmarks stored in this browser?")) {
+    if (window.confirm("Clear all understood marks, bookmarks, and machine coding practice marks stored in this browser?")) {
       setUnderstood([]);
       setBookmarks([]);
+      setMachineCompleted([]);
     }
   };
 
-  const sidebar = (
+  const sidebar = page === "machine" ? (
+    <MachineSidebar selected={machineId} onSelect={openMachine} completed={machineCompleted} searchRef={machineSearchRef} />
+  ) : (
     <Sidebar currentId={page === "problems" ? currentId : null} onSelect={open} understood={understood} bookmarks={bookmarks} searchRef={searchRef} />
   );
 
@@ -100,7 +134,7 @@ export default function App() {
     <div className="flex h-full flex-col bg-bg text-ink">
       <TopBar
         page={page}
-        onPage={setPage}
+        onPage={navigate}
         theme={theme}
         onTheme={setTheme}
         onMenu={() => setDrawer(true)}
@@ -112,13 +146,13 @@ export default function App() {
 
       {/* mobile page switcher (the top bar centre nav is desktop only) */}
       <div className="flex gap-1 overflow-x-auto border-b border-line bg-topbar px-3 py-2 md:hidden">
-        {(["problems", "learning", "progress"] as Page[]).map((p) => (
+        {(["problems", "machine", "learning", "progress"] as Page[]).map((p) => (
           <button
             key={p}
-            onClick={() => setPage(p)}
-            className={`rounded-lg px-4 py-1.5 text-[13px] font-medium capitalize ${page === p ? "bg-brand-soft text-brand-ink" : "text-mute"}`}
+            onClick={() => navigate(p)}
+            className={`whitespace-nowrap rounded-lg px-4 py-1.5 text-[13px] font-medium capitalize ${page === p ? "bg-brand-soft text-brand-ink" : "text-mute"}`}
           >
-            {p}
+            {p === "machine" ? "Machine Coding" : p}
           </button>
         ))}
       </div>
@@ -139,6 +173,7 @@ export default function App() {
         )}
 
         <main ref={mainRef} className="min-w-0 flex-1 overflow-y-auto">
+          {page === "machine" && <MachinePage key={machineId} problem={selectedMachine} completed={machineCompleted.includes(machineId)} onComplete={() => toggleMachineCompleted(machineId)} onSelect={openMachine} />}
           {page === "problems" && (
             <ProblemView
               key={problem.id}

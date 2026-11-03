@@ -5,8 +5,8 @@ const MIN = 35;
 const MAX = 65;
 const clamp = (value: number) => Math.max(MIN, Math.min(MAX, value));
 
-export default function ResizablePanels({ children }: { children: [ReactNode, ReactNode] }) {
-  const [split, setSplit] = useStored("dsa-workbench-split", 53);
+export default function ResizablePanels({ children, storageKey = "dsa-workbench-split", leftLabel = "Code", rightLabel = "Visualization" }: { children: [ReactNode, ReactNode]; storageKey?: string; leftLabel?: string; rightLabel?: string }) {
+  const [split, setSplit] = useStored(storageKey, 53);
   const [dragging, setDragging] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const ratio = Number.isFinite(split) ? clamp(split) : 53;
@@ -22,12 +22,12 @@ export default function ResizablePanels({ children }: { children: [ReactNode, Re
         <div
           role="separator"
           tabIndex={0}
-          aria-label="Resize code and visualization panels"
+          aria-label={`Resize ${leftLabel.toLowerCase()} and ${rightLabel.toLowerCase()} panels`}
           aria-orientation="vertical"
           aria-valuemin={MIN}
           aria-valuemax={MAX}
           aria-valuenow={Math.round(ratio)}
-          aria-valuetext={`Code ${Math.round(ratio)}%, visualization ${Math.round(100 - ratio)}%`}
+          aria-valuetext={`${leftLabel} ${Math.round(ratio)}%, ${rightLabel} ${Math.round(100 - ratio)}%`}
           title="Drag to resize · Double-click to reset · Arrow keys to adjust"
           className="workbench-divider"
           onPointerDown={(event) => {
